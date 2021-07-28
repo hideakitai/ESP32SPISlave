@@ -1,23 +1,21 @@
 #include <ESP32DMASPIMaster.h>
 #include <ESP32SPISlave.h>
 
-#define VSPI_SS SS // 5
+#define VSPI_SS SS  // 5
 SPIClass master(VSPI);
 ESP32SPISlave slave;
 
 // Reference: https://rabbit-note.com/2019/01/20/esp32-arduino-spi-slave/
 
 static constexpr uint32_t MAX_TRANSFER_SIZE {32};
-static constexpr uint32_t BUFFER_SIZE {MAX_TRANSFER_SIZE * 256}; // 8192 bytes
+static constexpr uint32_t BUFFER_SIZE {MAX_TRANSFER_SIZE * 256};  // 8192 bytes
 uint8_t spi_master_tx_buf[BUFFER_SIZE];
 uint8_t spi_master_rx_buf[BUFFER_SIZE];
 uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 uint32_t bytes_offset {0};
 
-
-void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len)
-{
+void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len) {
     if (len == 1)
         printf("%s [%d]: ", title, start);
     else
@@ -29,10 +27,8 @@ void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len)
     printf("\n");
 }
 
-void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* b_buf, uint32_t size)
-{
-    for (uint32_t i = 0; i < size; i++)
-    {
+void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* b_buf, uint32_t size) {
+    for (uint32_t i = 0; i < size; i++) {
         uint32_t j = 1;
 
         if (a_buf[i] == b_buf[i])
@@ -47,10 +43,8 @@ void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* 
     }
 }
 
-void set_buffer()
-{
-    for (uint32_t i = 0; i < BUFFER_SIZE; i++)
-    {
+void set_buffer() {
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
         spi_master_tx_buf[i] = i & 0xFF;
         spi_slave_tx_buf[i] = (0xFF - i) & 0xFF;
     }
@@ -58,9 +52,7 @@ void set_buffer()
     memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
 }
 
-
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     set_buffer();
@@ -80,8 +72,7 @@ void setup()
     // CS - CS, CLK - CLK, MOSI - MOSI, MISO - MISO
 }
 
-void loop()
-{
+void loop() {
     // just queue transaction
     // if transaction has completed from master, buffer is automatically updated
     slave.queue(spi_slave_rx_buf + bytes_offset, spi_slave_tx_buf + bytes_offset, MAX_TRANSFER_SIZE);
@@ -97,18 +88,15 @@ void loop()
     slave.yield();
 
     // if slave has received transaction data, available() returns size of received transactions
-    while (slave.available())
-    {
+    while (slave.available()) {
         printf("slave received size = %d\n", slave.size());
 
-        if (memcmp(spi_slave_rx_buf + bytes_offset, spi_master_tx_buf + bytes_offset, MAX_TRANSFER_SIZE))
-        {
+        if (memcmp(spi_slave_rx_buf + bytes_offset, spi_master_tx_buf + bytes_offset, MAX_TRANSFER_SIZE)) {
             printf("[ERROR] Master -> Slave Received Data has not matched !!\n");
             cmp_bug("Received ", spi_slave_rx_buf + bytes_offset, "Sent ", spi_master_tx_buf + bytes_offset, MAX_TRANSFER_SIZE);
         }
 
-        if (memcmp(spi_master_rx_buf + bytes_offset, spi_slave_tx_buf + bytes_offset, MAX_TRANSFER_SIZE))
-        {
+        if (memcmp(spi_master_rx_buf + bytes_offset, spi_slave_tx_buf + bytes_offset, MAX_TRANSFER_SIZE)) {
             printf("ERROR: Slave -> Master Received Data has not matched !!\n");
             cmp_bug("Received ", spi_master_rx_buf + bytes_offset, "Sent ", spi_slave_tx_buf + bytes_offset, MAX_TRANSFER_SIZE);
         }
@@ -119,7 +107,7 @@ void loop()
     }
 
     if (bytes_offset >= BUFFER_SIZE) {
-        while(true) {
+        while (true) {
             printf("Transaction finished\n");
             delay(1000);
         }

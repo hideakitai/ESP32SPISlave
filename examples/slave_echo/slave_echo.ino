@@ -6,21 +6,19 @@ static const uint32_t BUFFER_SIZE = 32;
 uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     delay(2000);
 
     slave.setDataMode(SPI_MODE3);
-    slave.setQueueSize(1); // transaction queue size
+    slave.setQueueSize(1);  // transaction queue size
 
     // begin() after setting
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    slave.begin(); // default SPI is HSPI
+    slave.begin();  // default SPI is HSPI
 }
 
-void loop()
-{
+void loop() {
     // if there is no transaction in queue, add transaction
     if (slave.remained() == 0)
         slave.queue(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
@@ -29,8 +27,7 @@ void loop()
     // available() returns size of results of transaction,
     // and buffer is automatically updated
 
-    while (slave.available())
-    {
+    while (slave.available()) {
         // show received data
         for (size_t i = 0; i < BUFFER_SIZE; ++i)
             printf("%d ", spi_slave_rx_buf[i]);

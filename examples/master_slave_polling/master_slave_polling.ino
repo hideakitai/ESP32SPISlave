@@ -1,7 +1,7 @@
 #include <ESP32DMASPIMaster.h>
 #include <ESP32SPISlave.h>
 
-#define VSPI_SS SS // 5
+#define VSPI_SS SS  // 5
 SPIClass master(VSPI);
 ESP32SPISlave slave;
 
@@ -13,9 +13,7 @@ uint8_t spi_master_rx_buf[BUFFER_SIZE];
 uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
-
-void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len)
-{
+void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len) {
     printf("len = %d\n", len);
     if (len == 1)
         printf("%s [%d]: ", title, start);
@@ -28,11 +26,9 @@ void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len)
     printf("\n");
 }
 
-void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* b_buf, uint32_t size)
-{
+void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* b_buf, uint32_t size) {
     printf("size = %d\n", size);
-    for (uint32_t i = 0; i < size; i++)
-    {
+    for (uint32_t i = 0; i < size; i++) {
         uint32_t j = 1;
 
         if (a_buf[i] == b_buf[i])
@@ -47,10 +43,8 @@ void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* 
     }
 }
 
-void set_buffer()
-{
-    for (uint32_t i = 0; i < BUFFER_SIZE; i++)
-    {
+void set_buffer() {
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
         spi_master_tx_buf[i] = i & 0xFF;
         spi_slave_tx_buf[i] = (0xFF - i) & 0xFF;
     }
@@ -87,9 +81,7 @@ void dump_buffer() {
     Serial.println();
 }
 
-
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     delay(5000);
@@ -112,8 +104,7 @@ void setup()
     set_buffer();
 }
 
-void loop()
-{
+void loop() {
     // just queue transaction
     // if transaction has completed from master, buffer is automatically updated
     slave.queue(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
@@ -121,34 +112,29 @@ void loop()
     // static uint32_t count = 0;
     // if (count++ % 3 == 0)
     // {
-        // start transaction
-        master.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
-        digitalWrite(VSPI_SS, LOW);
-        // master.transferBytes(spi_master_tx_buf, spi_master_rx_buf, BUFFER_SIZE);
-        for (size_t i = 0; i < BUFFER_SIZE; ++i)
-            spi_master_rx_buf[i] = master.transfer(spi_master_tx_buf[i]);
-        digitalWrite(VSPI_SS, HIGH);
-        master.endTransaction();
+    // start transaction
+    master.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    digitalWrite(VSPI_SS, LOW);
+    master.transferBytes(spi_master_tx_buf, spi_master_rx_buf, BUFFER_SIZE);
+    // for (size_t i = 0; i < BUFFER_SIZE; ++i)
+    //     spi_master_rx_buf[i] = master.transfer(spi_master_tx_buf[i]);
+    digitalWrite(VSPI_SS, HIGH);
+    master.endTransaction();
     // }
 
-    delay(100);
-
     // if slave has received transaction data, available() returns size of received transactions
-    while (slave.available())
-    {
+    while (slave.available()) {
         printf("slave received size = %d\n", slave.size());
         dump_buffer();
 
-        if (memcmp(spi_slave_rx_buf, spi_master_tx_buf, BUFFER_SIZE))
-        {
+        if (memcmp(spi_slave_rx_buf, spi_master_tx_buf, BUFFER_SIZE)) {
             printf("[ERROR] Master -> Slave Received Data has not matched !!\n");
             cmp_bug("Received ", spi_slave_rx_buf, "Sent ", spi_master_tx_buf, BUFFER_SIZE);
         } else {
             printf("Master -> Slave Transfer Success\n");
         }
 
-        if (memcmp(spi_master_rx_buf, spi_slave_tx_buf, BUFFER_SIZE))
-        {
+        if (memcmp(spi_master_rx_buf, spi_slave_tx_buf, BUFFER_SIZE)) {
             printf("[ERROR] Slave -> Master Received Data has not matched !!\n");
             cmp_bug("Received ", spi_master_rx_buf, "Sent ", spi_slave_tx_buf, BUFFER_SIZE);
         } else {
