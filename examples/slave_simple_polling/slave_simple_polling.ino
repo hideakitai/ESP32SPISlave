@@ -2,7 +2,7 @@
 
 ESP32SPISlave slave;
 
-static const uint32_t BUFFER_SIZE = 32;
+static constexpr uint32_t BUFFER_SIZE {32};
 uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
@@ -15,17 +15,17 @@ void set_buffer() {
 
 void setup() {
     Serial.begin(115200);
-
-    set_buffer();
-
-    delay(5000);
-
-    slave.setDataMode(SPI_MODE3);
-    slave.setQueueSize(1);  // transaction queue size
+    delay(2000);
 
     // begin() after setting
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    slave.begin();  // default SPI is HSPI
+    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
+    slave.setDataMode(SPI_MODE3);
+    slave.setQueueSize(1);  // transaction queue size
+    slave.begin();          // default SPI is HSPI
+    // slave.begin(VSPI);   // you can use VSPI like this
+
+    set_buffer();
 }
 
 void loop() {

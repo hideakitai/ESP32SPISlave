@@ -17,16 +17,11 @@ void setup() {
     slave.setQueueSize(1);  // transaction queue size
     slave.begin();          // default SPI is HSPI
     // slave.begin(VSPI);   // you can use VSPI like this
-
-    // clear buffers
-    memset(spi_slave_tx_buf, 0, BUFFER_SIZE);
-    memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
 }
 
 void loop() {
-    // if there is no transaction in queue, add transaction
-    if (slave.remained() == 0)
-        slave.queue(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
+    // block until the transaction comes from master
+    slave.wait(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
 
     // if transaction has completed from master,
     // available() returns size of results of transaction,
@@ -37,9 +32,6 @@ void loop() {
         for (size_t i = 0; i < BUFFER_SIZE; ++i)
             printf("%d ", spi_slave_rx_buf[i]);
         printf("\n");
-
-        // copy received bytes to tx buffer
-        memcpy(spi_slave_tx_buf, spi_slave_rx_buf, BUFFER_SIZE);
 
         slave.pop();
     }
