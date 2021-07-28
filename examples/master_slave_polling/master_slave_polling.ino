@@ -96,6 +96,7 @@ void setup()
 
     // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
     pinMode(VSPI_SS, OUTPUT);
+    digitalWrite(VSPI_SS, HIGH);
     master.begin();
 
     slave.setDataMode(SPI_MODE0);
