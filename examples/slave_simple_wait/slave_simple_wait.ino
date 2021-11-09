@@ -17,6 +17,10 @@ void setup() {
     slave.setQueueSize(1);  // transaction queue size
     slave.begin();          // default SPI is HSPI
     // slave.begin(VSPI);   // you can use VSPI like this
+
+    // clear buffers
+    memset(spi_slave_tx_buf, 0, BUFFER_SIZE);
+    memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
 }
 
 void loop() {

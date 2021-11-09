@@ -1,4 +1,3 @@
-#include <ESP32DMASPIMaster.h>
 #include <ESP32SPISlave.h>
 
 static constexpr uint8_t VSPI_SS {SS};  // default: GPIO 5
@@ -46,8 +45,6 @@ void set_buffer() {
         spi_master_tx_buf[i] = i & 0xFF;
         spi_slave_tx_buf[i] = (0xFF - i) & 0xFF;
     }
-    memset(spi_master_rx_buf, 0, BUFFER_SIZE);
-    memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
 
     // dump_buffer();
 }
