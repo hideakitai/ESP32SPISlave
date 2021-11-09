@@ -17,9 +17,9 @@ void pirnt_array_range(const char* title, uint8_t* buf, uint32_t start, uint32_t
     else
         printf("%s [%d-%d]: ", title, start, start + len - 1);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++) {
         printf("%02X ", buf[start + i]);
-
+    }
     printf("\n");
 }
 
@@ -27,11 +27,11 @@ void print_if_not_matched(const char* a_title, uint8_t* a_buf, const char* b_tit
     for (uint32_t i = 0; i < size; i++) {
         uint32_t j = 1;
 
-        if (a_buf[i] == b_buf[i])
-            continue;
+        if (a_buf[i] == b_buf[i]) continue;
 
-        while ((a_buf[i + j] != b_buf[i + j]) && ((i + j) < size))
+        while ((a_buf[i + j] != b_buf[i + j]) && ((i + j) < size)) {
             j++;
+        }
 
         pirnt_array_range(a_title, a_buf, i, j);
         pirnt_array_range(b_title, b_buf, i, j);

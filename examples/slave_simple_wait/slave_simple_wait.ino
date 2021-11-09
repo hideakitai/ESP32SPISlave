@@ -29,8 +29,9 @@ void loop() {
 
     while (slave.available()) {
         // show received data
-        for (size_t i = 0; i < BUFFER_SIZE; ++i)
+        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
             printf("%d ", spi_slave_rx_buf[i]);
+        }
         printf("\n");
 
         slave.pop();

@@ -41,8 +41,9 @@ void loop() {
 
     while (slave.available()) {
         // show received data
-        for (size_t i = bytes_offset; i < bytes_offset + MAX_TRANSFER_SIZE; ++i)
+        for (size_t i = bytes_offset; i < bytes_offset + MAX_TRANSFER_SIZE; ++i) {
             printf("%d ", spi_slave_rx_buf[i]);
+        }
         printf("\n");
 
         bytes_offset += MAX_TRANSFER_SIZE;

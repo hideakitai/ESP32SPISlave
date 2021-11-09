@@ -29,7 +29,12 @@ namespace esp32 {
             std::deque<uint32_t> results;
 
         public:
-            bool begin(const uint8_t spi_bus = HSPI, const int8_t sck = -1, const int8_t miso = -1, const int8_t mosi = -1, int8_t ss = -1);
+            bool begin(
+                const uint8_t spi_bus = HSPI,
+                const int8_t sck = -1,
+                const int8_t miso = -1,
+                const int8_t mosi = -1,
+                const int8_t ss = -1);
             bool end();
 
             // wait for transaction one by one

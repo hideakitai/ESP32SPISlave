@@ -19,9 +19,9 @@ void pirnt_array_range(const char* title, uint8_t* buf, uint32_t start, uint32_t
     else
         printf("%s [%d-%d]: ", title, start, start + len - 1);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++) {
         printf("%02X ", buf[start + i]);
-
+    }
     printf("\n");
 }
 
@@ -29,11 +29,11 @@ void print_if_not_matched(const char* a_title, uint8_t* a_buf, const char* b_tit
     for (uint32_t i = 0; i < size; i++) {
         uint32_t j = 1;
 
-        if (a_buf[i] == b_buf[i])
-            continue;
+        if (a_buf[i] == b_buf[i]) continue;
 
-        while (a_buf[i + j] != b_buf[i + j])
+        while (a_buf[i + j] != b_buf[i + j]) {
             j++;
+        }
 
         pirnt_array_range(a_title, a_buf, i, j);
         pirnt_array_range(b_title, b_buf, i, j);
@@ -120,14 +120,24 @@ void loop() {
 
         if (memcmp(spi_slave_rx_buf + bytes_offset, spi_master_tx_buf + bytes_offset, MAX_TRANSFER_SIZE)) {
             printf("[ERROR] Master -> Slave Received Data has not matched !!\n");
-            print_if_not_matched("Received ", spi_slave_rx_buf + bytes_offset, "Sent ", spi_master_tx_buf + bytes_offset, MAX_TRANSFER_SIZE);
+            print_if_not_matched(
+                "Received ",
+                spi_slave_rx_buf + bytes_offset,
+                "Sent ",
+                spi_master_tx_buf + bytes_offset,
+                MAX_TRANSFER_SIZE);
         } else {
             // printf("Master -> Slave Transfer Success\n");
         }
 
         if (memcmp(spi_master_rx_buf + bytes_offset, spi_slave_tx_buf + bytes_offset, MAX_TRANSFER_SIZE)) {
             printf("[ERROR] Slave -> Master Received Data has not matched !!\n");
-            print_if_not_matched("Received ", spi_master_rx_buf + bytes_offset, "Sent ", spi_slave_tx_buf + bytes_offset, MAX_TRANSFER_SIZE);
+            print_if_not_matched(
+                "Received ",
+                spi_master_rx_buf + bytes_offset,
+                "Sent ",
+                spi_slave_tx_buf + bytes_offset,
+                MAX_TRANSFER_SIZE);
         } else {
             // printf("Slave -> Master Transfer Success\n");
         }
