@@ -13,12 +13,11 @@ This is the simple SPI slave library and does NOT use DMA. Please use [ESP32DMAS
   - `wait()` to receive/send transaction one by one
   - `queue()` and `yield()` to receive/send multiple transactions at once (more efficient than `wait()` many times)
 
-
 ## Usage
 
 ### Wait for the transaction one by one
 
-``` C++
+```C++
 #include <ESP32SPISlave.h>
 
 ESP32SPISlave slave;
@@ -28,10 +27,9 @@ uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
 void setup() {
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    slave.setDataMode(SPI_MODE3);
-    slave.setQueueSize(1);  // transaction queue size
+    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12 -> default
+    // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
+    slave.setDataMode(SPI_MODE0);
     slave.begin(HSPI);
 }
 
@@ -63,9 +61,8 @@ uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
 void setup() {
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    slave.setDataMode(SPI_MODE3);
-    slave.setQueueSize(1);  // transaction queue size
+    // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
+    slave.setDataMode(SPI_MODE0);
     slave.begin(VSPI);
 }
 
@@ -84,7 +81,6 @@ void loop() {
     }
 }
 ```
-
 
 ### Queue the transaction (task)
 
@@ -129,8 +125,7 @@ void task_process_buffer(void* pvParameters) {
 void setup() {
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
     // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    slave.setDataMode(SPI_MODE3);
-    slave.setQueueSize(1);  // transaction queue size
+    slave.setDataMode(SPI_MODE0);
     slave.begin(HSPI);
 
     xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
@@ -145,8 +140,9 @@ void loop() {
 
 ## APIs
 
-```C++
-bool begin(const uint8_t spi_bus = HSPI, const int8_t sck = -1, const int8_t miso = -1, const int8_t mosi = -1, int8_t ss = -1);
+````C++
+bool begin(const uint8_t spi_bus = HSPI);
+bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
 bool end();
 
 // wait for transaction one by one
@@ -169,17 +165,21 @@ size_t remained() const;
 uint32_t size() const;
 void pop();
 
+// ===== Main Configurations =====
 // set these optional parameters before begin() if you want
 void setDataMode(const uint8_t m);
-void setQueueSize(const int s);
-```
 
+// ===== Optional Configurations =====
+void setSlaveFlags(const uint32_t flags);  // OR of SPI_SLAVE_* flags
+void setQueueSize(const int n);
+void setSpiMode(const uint8_t m);
+```
 
 ## TODO (PR welcome!!)
 
 - more configs? (SPI ISR callbacks, SPI cmd/addr/user feature, etc...)
 
-
 ## License
 
 MIT
+````
