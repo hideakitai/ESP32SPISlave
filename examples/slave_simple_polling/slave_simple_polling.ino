@@ -18,11 +18,10 @@ void setup() {
     delay(2000);
 
     // begin() after setting
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
-    slave.setDataMode(SPI_MODE3);
-    slave.setQueueSize(1);  // transaction queue size
-    slave.begin();          // default SPI is HSPI
+    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12 -> default
+    // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
+    slave.setDataMode(SPI_MODE0);
+    slave.begin();
     // slave.begin(VSPI);   // you can use VSPI like this
 
     set_buffer();
@@ -40,7 +39,7 @@ void loop() {
 
     while (slave.available()) {
         // show received data
-        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
+        for (size_t i = 0; i < slave.size(); ++i) {
             printf("%d ", spi_slave_rx_buf[i]);
         }
         printf("\n");
