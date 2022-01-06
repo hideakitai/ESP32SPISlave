@@ -55,6 +55,9 @@ class Slave {
     std::deque<uint32_t> results;
 
 public:
+    // use HSPI or VSPI with default pin assignment
+    // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
+    // HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
     bool begin(const uint8_t spi_bus = HSPI) {
         bus_cfg.mosi_io_num = (spi_bus == VSPI) ? MOSI : 13;
         bus_cfg.miso_io_num = (spi_bus == VSPI) ? MISO : 12;
@@ -63,6 +66,7 @@ public:
         return initialize(spi_bus);
     }
 
+    // use HSPI or VSPI with your own pin assignment
     bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss) {
         bus_cfg.mosi_io_num = mosi;
         bus_cfg.miso_io_num = miso;
@@ -132,17 +136,23 @@ public:
     }
 
     // transaction result info
+
+    // size of completed (received) transaction results
     size_t available() const {
         return results.size();
     }
 
+    // size of queued (not completed) transactions
     size_t remained() const {
         return transactions.size();
     }
 
+    // size of the received bytes of the oldest queued transaction result
     uint32_t size() const {
         return results.front() / 8;
     }
+
+    // pop the oldest transaction result
     void pop() {
         results.pop_front();
     }
