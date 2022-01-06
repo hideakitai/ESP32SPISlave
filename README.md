@@ -186,10 +186,6 @@ void setQueueSize(const int n);
 void setSpiMode(const uint8_t m);
 ```
 
-## TODO (PR welcome!!)
-
-- more configs? (SPI ISR callbacks, SPI cmd/addr/user feature, etc...)
-
 ## License
 
 MIT
