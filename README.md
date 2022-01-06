@@ -13,6 +13,13 @@ This is the simple SPI slave library and does NOT use DMA. Please use [ESP32DMAS
   - `wait()` to receive/send transaction one by one
   - `queue()` and `yield()` to receive/send multiple transactions at once (more efficient than `wait()` many times)
 
+### Supported ESP32 Version
+
+| IDE         | ESP32 Board Version                  |
+| ----------- | ------------------------------------ |
+| Arduino IDE | `>= 2.0.0`                           |
+| PlatformIO  | Currently (`<= 3.4.0`) NOT Supported |
+
 ## Usage
 
 ### Wait for the transaction one by one
