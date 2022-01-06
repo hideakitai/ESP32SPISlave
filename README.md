@@ -147,7 +147,7 @@ void loop() {
 
 ## APIs
 
-````C++
+```C++
 // use HSPI or VSPI with default pin assignment
 // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
 // HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
@@ -193,4 +193,3 @@ void setSpiMode(const uint8_t m);
 ## License
 
 MIT
-````
