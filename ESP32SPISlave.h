@@ -33,7 +33,7 @@ class Slave {
     friend void spi_slave_trans_done(spi_slave_transaction_t* trans);
 
     spi_slave_interface_config_t if_cfg {
-        .spics_io_num = 15,  // HSPI
+        .spics_io_num = SS,  // HSPI
         .flags = 0,
         .queue_size = 3,
         .mode = SPI_MODE0,
@@ -42,32 +42,28 @@ class Slave {
     };
 
     spi_bus_config_t bus_cfg {
-        .mosi_io_num = 13,  // HSPI
-        .miso_io_num = 12,  // HSPI
-        .sclk_io_num = 14,  // HSPI
+        .mosi_io_num = MOSI,  // HSPI
+        .miso_io_num = MISO,  // HSPI
+        .sclk_io_num = SCK,  // HSPI
         .max_transfer_sz = SOC_SPI_MAXIMUM_BUFFER_SIZE,
         .flags = SPICOMMON_BUSFLAG_SLAVE,
     };
 
-    spi_host_device_t host {HSPI_HOST};
+    spi_host_device_t host {SPI1_HOST};
 
     std::deque<spi_slave_transaction_t> transactions;
     std::deque<uint32_t> results;
 
 public:
-    // use HSPI or VSPI with default pin assignment
-    // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
-    // HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
-    bool begin(const uint8_t spi_bus = HSPI) {
-        bus_cfg.mosi_io_num = (spi_bus == VSPI) ? MOSI : 13;
-        bus_cfg.miso_io_num = (spi_bus == VSPI) ? MISO : 12;
-        bus_cfg.sclk_io_num = (spi_bus == VSPI) ? SCK : 14;
-        if_cfg.spics_io_num = (spi_bus == VSPI) ? SS : 15;
+    bool begin(const spi_host_device_t spi_bus = SPI2_HOST) {
+        bus_cfg.mosi_io_num = MOSI;
+        bus_cfg.miso_io_num = MISO;
+        bus_cfg.sclk_io_num = SCK;
+        if_cfg.spics_io_num = SS;
         return initialize(spi_bus);
     }
 
-    // use HSPI or VSPI with your own pin assignment
-    bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss) {
+    bool begin(const spi_host_device_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss) {
         bus_cfg.mosi_io_num = mosi;
         bus_cfg.miso_io_num = miso;
         bus_cfg.sclk_io_num = sck;
@@ -179,9 +175,9 @@ public:
     }
 
 private:
-    bool initialize(const uint8_t spi_bus) {
-        host = (spi_bus == HSPI) ? HSPI_HOST : VSPI_HOST;
-        esp_err_t e = spi_slave_initialize(host, &bus_cfg, &if_cfg, SPI_DMA_DISABLED);
+    bool initialize(const spi_host_device_t spi_bus) {
+		host = spi_bus;
+        esp_err_t e = spi_slave_initialize(spi_bus, &bus_cfg, &if_cfg, SPI_DMA_DISABLED);
 
         return (e == ESP_OK);
     }
