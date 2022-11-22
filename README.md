@@ -17,7 +17,7 @@ This is the simple SPI slave library and does NOT use DMA. Please use [ESP32DMAS
 
 | IDE         | ESP32 Board Version                  |
 | ----------- | ------------------------------------ |
-| Arduino IDE | `>= 2.0.0`                           |
+| Arduino IDE | `>= 2.0.5`                           |
 | PlatformIO  | Currently (`<= 3.4.0`) NOT Supported |
 
 ## Usage
