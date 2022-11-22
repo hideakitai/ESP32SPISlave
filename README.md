@@ -34,10 +34,8 @@ uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
 void setup() {
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12 -> default
-    // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
     slave.setDataMode(SPI_MODE0);
-    slave.begin(HSPI);
+    slave.begin(SPI1_HOST);
 }
 
 void loop() {
@@ -67,10 +65,8 @@ uint8_t spi_slave_tx_buf[BUFFER_SIZE];
 uint8_t spi_slave_rx_buf[BUFFER_SIZE];
 
 void setup() {
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
     slave.setDataMode(SPI_MODE0);
-    slave.begin(VSPI);
+    slave.begin(SPI1_HOST);
 }
 
 void loop() {
@@ -130,10 +126,8 @@ void task_process_buffer(void* pvParameters) {
 }
 
 void setup() {
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
     slave.setDataMode(SPI_MODE0);
-    slave.begin(HSPI);
+    slave.begin(SPI1_HOST);
 
     xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
     xTaskNotifyGive(task_handle_wait_spi);
@@ -148,12 +142,10 @@ void loop() {
 ## APIs
 
 ```C++
-// use HSPI or VSPI with default pin assignment
-// VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
-// HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
-bool begin(const uint8_t spi_bus = HSPI);
-// use HSPI or VSPI with your own pin assignment
-bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
+// use SPI(x)_HOST with default pin assignment
+bool begin(const spi_host_device_t spi_bus = SPI1_HOST);
+// use SPI(x)_HOST with your own pin assignment
+bool begin(const spi_host_device_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
 bool end();
 
 // wait for transaction one by one
