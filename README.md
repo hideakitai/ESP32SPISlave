@@ -45,7 +45,7 @@ void loop() {
     slave.wait(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
 
     // if transaction has completed from master,
-    // available() returns size of results of transaction,
+    // available() returns the number of completed transactions,
     // and `spi_slave_rx_buf` is automatically updated
     while (slave.available()) {
         // do something with `spi_slave_rx_buf`
@@ -79,7 +79,7 @@ void loop() {
         slave.queue(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
 
     // if transaction has completed from master,
-    // available() returns size of results of transaction,
+    // available() returns the number of completed transactions,
     // and `spi_slave_rx_buf` is automatically updated
     while (slave.available()) {
         // do something with `spi_slave_rx_buf`
@@ -171,9 +171,9 @@ bool queue(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
 void yield();
 
 // transaction result info
-size_t available() const;  // size of completed (received) transaction results
-size_t remained() const;   // size of queued (not completed) transactions
-uint32_t size() const;     // size of the received bytes of the oldest queued transaction result
+size_t available() const;  // number of completed (received) transactions
+size_t remained() const;   // number of queued (not completed) transactions
+uint32_t size() const;     // number of the received bytes of the oldest queued transaction result
 void pop();                // pop the oldest transaction result
 
 // ===== Main Configurations =====
