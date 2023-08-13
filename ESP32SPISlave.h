@@ -45,8 +45,15 @@ class Slave {
         .mosi_io_num = MOSI,
         .miso_io_num = MISO,
         .sclk_io_num = SCK,
+        .quadwp_io_num = 0,
+        .quadhd_io_num = 0,
+        .data4_io_num = 0,
+        .data5_io_num = 0,
+        .data6_io_num = 0,
+        .data7_io_num = 0,
         .max_transfer_sz = SOC_SPI_MAXIMUM_BUFFER_SIZE,
         .flags = SPICOMMON_BUSFLAG_SLAVE,
+        .intr_flags = 0,
     };
 
     spi_host_device_t host {SPI2_HOST};
