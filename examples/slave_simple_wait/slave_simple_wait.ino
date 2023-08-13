@@ -11,10 +11,10 @@ void setup() {
     delay(2000);
 
     // begin() after setting
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12 -> default
-    // VSPI = CS:  5, CLK: 18, MOSI: 23, MISO: 19
+    // note: the default pins are different depending on the board
+    // please refer to README Section "SPI Buses and SPI Pins" for more details
     slave.setDataMode(SPI_MODE0);
-    slave.begin();
+    slave.begin(); // HSPI
     // slave.begin(VSPI);   // you can use VSPI like this
 
     // clear buffers

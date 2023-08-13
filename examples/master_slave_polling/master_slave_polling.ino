@@ -1,5 +1,9 @@
 #include <ESP32SPISlave.h>
 
+#ifndef CONFIG_IDF_TARGET_ESP32
+#error This example supports only ESP32 borads
+#endif
+
 static constexpr uint8_t VSPI_SS {SS};  // default: GPIO 5
 SPIClass master(VSPI);
 ESP32SPISlave slave;
