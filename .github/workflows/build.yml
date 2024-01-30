@@ -50,9 +50,7 @@ jobs:
             - name: ${{matrix.board.vendor}}:${{matrix.board.arch}}
               source-url: ${{matrix.index}}
           sketch-paths: |
-            - examples/slave_simple_polling
-            - examples/slave_simple_task
-            - examples/slave_simple_wait
+            - examples
           libraries: |
             - source-path: ./
           verbose: true
