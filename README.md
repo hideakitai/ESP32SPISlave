@@ -2,6 +2,9 @@
 
 SPI Slave library for ESP32
 
+> [!CAUTION]
+> Breaking API changes from v0.4.0 and above
+
 ## ESP32DMASPI
 
 This is the simple SPI slave library and does NOT use DMA. Please use [ESP32DMASPI](https://github.com/hideakitai/ESP32DMASPI) to transfer more than 32 bytes with DMA.
@@ -9,9 +12,12 @@ This is the simple SPI slave library and does NOT use DMA. Please use [ESP32DMAS
 ## Feature
 
 - Support SPI Slave mode based on [ESP32's SPI Slave Driver](https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#spi-slave-driver)
-- There are two ways to receive/send transactions
-  - `wait()` to receive/send transaction one by one
-  - `queue()` and `yield()` to receive/send multiple transactions at once (more efficient than `wait()` many times)
+- Slave has several ways to send/receive transactions
+  - `transfer()` to send/receive transaction one by one (blocking)
+  - `queue()` and `wait()` to send/receive multiple transactions at once and wait for them (blocking but more efficient than `transfer()` many times)
+  - `queue()` and `trigger()` to send/receive multiple transactions at once in the background (non-blocking)
+- Various configurations based on driver APIs
+- Register user-defined ISR callbacks
 
 ### Supported ESP32 Version
 
@@ -20,128 +26,107 @@ This is the simple SPI slave library and does NOT use DMA. Please use [ESP32DMAS
 | Arduino IDE | `>= 2.0.11`         |
 | PlatformIO  | `>= 5.0.0`          |
 
+## Notes for Communication Errors
+
+If you have communication errors when trying examples, please check the following points.
+
+- Check that the SPI Mode is the same
+- Check if the pin number and connection destination are correct
+- Connect pins as short as possible
+- Be careful of signal line crosstalk (Be careful not to tangle wires)
+- If you are using two devices, ensure they share a common ground level
+- If you still have communication problems, try a lower frequency (1MHz or less)
+
 ## Usage
 
-### Wait for the transaction one by one
+Please refer examples for more information.
+
+### Blocking big `transfer()` one by one
 
 ```C++
-#include <ESP32SPISlave.h>
+#include <ESP32DMASPISlave.h>
 
-ESP32SPISlave slave;
+ESP32DMASPI::Slave slave;
 
-static constexpr uint32_t BUFFER_SIZE {32};
-uint8_t spi_slave_tx_buf[BUFFER_SIZE];
-uint8_t spi_slave_rx_buf[BUFFER_SIZE];
+static constexpr size_t BUFFER_SIZE = 8;
+static constexpr size_t QUEUE_SIZE = 1;
+uint8_t tx_buf[BUFFER_SIZE] {1, 2, 3, 4, 5, 6, 7, 8};
+uint8_t rx_buf[BUFFER_SIZE] {0, 0, 0, 0, 0, 0, 0, 0};
 
-void setup() {
-    // note: the default pins are different depending on the board
-    // please refer to README Section "SPI Buses and SPI Pins" for more details
-    slave.setDataMode(SPI_MODE0);
-    slave.begin(HSPI);
+void setup()
+{
+    slave.setDataMode(SPI_MODE0);   // default: SPI_MODE0
+    slave.setQueueSize(QUEUE_SIZE); // default: 1
+
+    // begin() after setting
+    slave.begin();  // default: HSPI (please refer README for pin assignments)
 }
 
-void loop() {
-    // block until the transaction comes from master
-    slave.wait(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
+void loop()
+{
+    // do some initialization for tx_buf and rx_buf
 
-    // if transaction has completed from master,
-    // available() returns the number of completed transactions,
-    // and `spi_slave_rx_buf` is automatically updated
-    while (slave.available()) {
-        // do something with `spi_slave_rx_buf`
+    // start and wait to complete one BIG transaction (same data will be received from slave)
+    const size_t received_bytes = slave.transfer(tx_buf, rx_buf, BUFFER_SIZE);
 
-        slave.pop();
-    }
+    // do something with received_bytes and rx_buf if needed
 }
 ```
 
-### Queue the transaction (polling)
+### Blocking multiple transactions
 
-```C++
-#include <ESP32SPISlave.h>
+You can use Master and Slave almost the same way (omit the Slave example here).
 
-ESP32SPISlave slave;
+```c++
+void loop()
+{
+    // do some initialization for tx_buf and rx_buf
 
-static constexpr uint32_t BUFFER_SIZE {32};
-uint8_t spi_slave_tx_buf[BUFFER_SIZE];
-uint8_t spi_slave_rx_buf[BUFFER_SIZE];
+    // queue multiple transactions
+    // in this example, the master sends some data first,
+    slave.queue(NULL, rx_buf, BUFFER_SIZE);
+    // and the slave sends same data after that
+    slave.queue(tx_buf, NULL, BUFFER_SIZE);
 
-void setup() {
-    // note: the default pins are different depending on the board
-    // please refer to README Section "SPI Buses and SPI Pins" for more details
-    slave.setDataMode(SPI_MODE0);
-    slave.begin(VSPI);
+    // wait for the completion of the queued transactions
+    const std::vector<size_t> received_bytes = slave.wait();
+
+    // do something with received_bytes and rx_buf if needed
 }
 
-void loop() {
-    // if there is no transaction in queue, add transaction
-    if (slave.remained() == 0)
-        slave.queue(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
-
-    // if transaction has completed from master,
-    // available() returns the number of completed transactions,
-    // and `spi_slave_rx_buf` is automatically updated
-    while (slave.available()) {
-        // do something with `spi_slave_rx_buf`
-
-        slave.pop();
-    }
-}
 ```
 
-### Queue the transaction (task)
+### Non-blocking multiple transactions
 
-```C++
-#include <ESP32SPISlave.h>
+You can use Master and Slave almost the same way (omit the Slave example here).
 
-ESP32SPISlave slave;
+```c++
+void loop()
+{
+    // if no transaction is in flight and all results are handled, queue new transactions
+    if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == 0) {
+        // do some initialization for tx_buf and rx_buf
 
-static constexpr uint32_t BUFFER_SIZE {32};
-uint8_t spi_slave_tx_buf[BUFFER_SIZE];
-uint8_t spi_slave_rx_buf[BUFFER_SIZE];
+        // queue multiple transactions
+        // in this example, the master sends some data first,
+        slave.queue(NULL, rx_buf, BUFFER_SIZE);
+        // and the slave sends same data after that
+        slave.queue(tx_buf, NULL, BUFFER_SIZE);
 
-constexpr uint8_t CORE_TASK_SPI_SLAVE {0};
-constexpr uint8_t CORE_TASK_PROCESS_BUFFER {0};
-
-static TaskHandle_t task_handle_wait_spi = 0;
-static TaskHandle_t task_handle_process_buffer = 0;
-
-void task_wait_spi(void* pvParameters) {
-    while (1) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-        // block until the transaction comes from master
-        slave.wait(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
-
-        xTaskNotifyGive(task_handle_process_buffer);
+        // finally, we should trigger transaction in the background
+        slave.trigger();
     }
-}
 
-void task_process_buffer(void* pvParameters) {
-    while (1) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    // you can do some other stuff here
+    // NOTE: you can't touch dma_tx/rx_buf because it's in-flight in the background
 
-        // do something with `spi_slave_rx_buf`
+    // if all transactions are completed and all results are ready, handle results
+    if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == QUEUE_SIZE) {
+        // get received bytes for all transactions
+        const std::vector<size_t> received_bytes = slave.numBytesReceivedAll();
 
-        slave.pop();
-
-        xTaskNotifyGive(task_handle_wait_spi);
+        // do something with received_bytes and rx_buf if needed
     }
-}
-
-void setup() {
-    // note: the default pins are different depending on the board
-    // please refer to README Section "SPI Buses and SPI Pins" for more details
-    slave.setDataMode(SPI_MODE0);
-    slave.begin(HSPI);
-
-    xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
-    xTaskNotifyGive(task_handle_wait_spi);
-
-    xTaskCreatePinnedToCore(task_process_buffer, "task_process_buffer", 2048, NULL, 2, &task_handle_process_buffer, CORE_TASK_PROCESS_BUFFER);
-}
-
-void loop() {
 }
 ```
 
@@ -159,16 +144,16 @@ The pins for SPI buses are automatically attached as follows. "Default SPI Pins"
 | `esp32s3` | HSPI/FSPI | 11   | 13   | 12  | 10  | Yes              |
 | `esp32c3` | HSPI/FSPI | 6    | 5    | 4   | 7   | Yes              |
 
-Depending on your board, the default SPI pins are defined in `pins_arduino.h`. For example, `esp32`'s default SPI pins are found [here](https://github.com/espressif/arduino-esp32/blob/e1f14331f173a00a9062f616bc9a62c358b9076f/variants/esp32/pins_arduino.h#L20-L23) (`MOSI: 23, MISO: 19, SCK: 18, SS: 5`). Please refer to [arduino-esp32/variants](https://github.com/espressif/arduino-esp32/tree/e1f14331f173a00a9062f616bc9a62c358b9076f/variants)  for your board's default SPI pins.
+Depending on your board, the default SPI pins are defined in `pins_arduino.h`. For example, `esp32`'s default SPI pins are found [here](https://github.com/espressif/arduino-esp32/blob/e1f14331f173a00a9062f616bc9a62c358b9076f/variants/esp32/pins_arduino.h#L20-L23) (`MOSI: 23, MISO: 19, SCK: 18, SS: 5`). Please refer to [arduino-esp32/variants](https://github.com/espressif/arduino-esp32/tree/e1f14331f173a00a9062f616bc9a62c358b9076f/variants) for your board's default SPI pins.
 
 The supported SPI buses are different from the ESP32 chip. Please note that there may be a restriction to use `FSPI` for your SPI bus. (Note: though `arduino-esp32` still uses `FSPI` and `HSPI` for all chips (v2.0.11), these are deprecated for the chips after `esp32s2`)
 
-| Chip     | FSPI              | HSPI              | VSPI               |
-| -------- | ----------------- | ----------------- | ------------------ |
+| Chip     | FSPI                | HSPI                | VSPI                 |
+| -------- | ------------------- | ------------------- | -------------------- |
 | ESP32    | SPI1_HOST(`0`) [^1] | SPI2_HOST(`1`) [^2] | SPI3_HOST (`2`) [^3] |
-| ESP32-S2 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                  |
-| ESP32-S3 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                  |
-| ESP32-C3 | SPI2_HOST(`1`)      | SPI2_HOST(`1`)      | -                  |
+| ESP32-S2 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                    |
+| ESP32-S3 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                    |
+| ESP32-C3 | SPI2_HOST(`1`)      | SPI2_HOST(`1`)      | -                    |
 
 [^1]: SPI bus attached to the flash (can use the same data lines but different SS)
 [^2]: SPI bus normally mapped to pins 12 - 15 on ESP32 but can be matrixed to any pins
@@ -191,40 +176,68 @@ The supported SPI buses are different from the ESP32 chip. Please note that ther
 ## APIs
 
 ```C++
-// use SPI with the default pin assignment
+/// @brief initialize SPI with the default pin assignment for HSPI, or VSPI
 bool begin(const uint8_t spi_bus = HSPI);
-// use SPI with your own pin assignment
-bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
-bool end();
+/// @brief initialize SPI with HSPI/FSPI/VSPI, sck, miso, mosi, and ss pins
+bool begin(uint8_t spi_bus, int sck, int miso, int mosi, int ss);
+/// @brief initialize SPI with HSPI/FSPI/VSPI and Qued SPI pins
+bool begin(uint8_t spi_bus, int sck, int ss, int data0, int data1, int data2, int data3);
+/// @brief initialize SPI with HSPI/FSPI/VSPI and Octo SPI pins
+bool begin(uint8_t spi_bus, int sck, int ss, int data0, int data1, int data2, int data3, int data4, int data5, int data6, int data7);
+/// @brief stop spi slave (terminate spi_slave_task and deinitialize spi)
+void end();
 
-// wait for transaction one by one
-bool wait(uint8_t* rx_buf, const size_t size);  // no data to master
-bool wait(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
+/// @brief execute one transaction and wait for the completion
+size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0);
+size_t transfer(uint32_t flags, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms);
 
-// queueing transaction
-// wait (blocking) and timeout occurs if queue is full with transaction
-// (but designed not to queue transaction more than queue_size, so there is no timeout argument)
-bool queue(uint8_t* rx_buf, const size_t size);  // no data to master
-bool queue(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
+/// @brief  queue transaction to internal transaction buffer.
+///         To start transaction, wait() or trigger() must be called.
+bool queue(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size);
+bool queue(uint32_t flags, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size);
 
-// wait until all queued transaction will be done by master
-// if yield is finished, all the buffer is updated to latest
-void yield();
+/// @brief execute queued transactions and wait for the completion.
+///        rx_buf is automatically updated after the completion of each transaction.
+std::vector<size_t> wait(uint32_t timeout_ms = 0);
 
-// transaction result info
-size_t available() const;  // number of completed (received) transactions
-size_t remained() const;   // number of queued (not completed) transactions
-uint32_t size() const;     // number of the received bytes of the oldest queued transaction result
-void pop();                // pop the oldest transaction result
+/// @brief execute queued transactions asynchronously in the background (without blocking)
+///        numBytesReceivedAll() or numBytesReceived() is required to confirm the results of transactions
+///        rx_buf is automatically updated after the completion of each transaction.
+bool trigger();
+
+/// @brief return the number of in-flight transactions
+size_t numTransactionsInFlight();
+/// @brief return the number of completed but not received transaction results
+size_t numTransactionsCompleted();
+/// @brief return the oldest result of the completed transaction (received bytes)
+size_t numBytesReceived();
+/// @brief return all results of the completed transactions (received bytes)
+std::vector<size_t> numBytesReceivedAll();
 
 // ===== Main Configurations =====
 // set these optional parameters before begin() if you want
-void setDataMode(const uint8_t m);
+
+/// @brief set spi data mode
+void setDataMode(uint8_t mode);
+/// @brief set queue size (default: 1)
+void setQueueSize(size_t size);
 
 // ===== Optional Configurations =====
-void setSlaveFlags(const uint32_t flags);  // OR of SPI_SLAVE_* flags
-void setQueueSize(const int n);
-void setSpiMode(const uint8_t m);
+// set these optional parameters before begin() if you want
+
+/// @brief Bitwise OR of SPI_SLAVE_* flags.
+void setSlaveFlags(uint32_t flags);
+/// @brief SPI mode, representing a pair of (CPOL, CPHA) configuration: 0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)
+void setSpiMode(uint8_t m);
+/// @brief Callback called after the SPI registers are loaded with new data.
+void setPostSetupCb(const slave_transaction_cb_t &post_setup_cb);
+/// @brief Callback called after a transaction is done.
+void setPostTransCb(const slave_transaction_cb_t &post_trans_cb);
+/// @brief set post_setup callback (ISR) and its argument that are called after transaction setup completed.
+///        you can call this function before every transfer() / queue() to change the behavior per transaction.
+///        see more details about callbacks at https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/spi_master.html#_CPPv4N29spi_device_interface_config_t6pre_cbE
+void setUserPostSetupCbAndArg(const spi_slave_user_cb_t &cb, void *arg);
+void setUserPostTransCbAndArg(const spi_slave_user_cb_t &cb, void *arg);
 ```
 
 ## License
