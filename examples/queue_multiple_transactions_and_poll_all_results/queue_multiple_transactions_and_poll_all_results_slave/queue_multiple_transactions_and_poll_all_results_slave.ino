@@ -1,7 +1,7 @@
-#include <ESP32DMASPISlave.h>
+#include <ESP32SPISlave.h>
 #include "helper.h"
 
-ESP32DMASPI::Slave slave;
+ESP32SPISlave slave;
 
 static constexpr size_t BUFFER_SIZE = 8;
 static constexpr size_t QUEUE_SIZE = 2;

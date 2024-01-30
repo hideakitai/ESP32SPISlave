@@ -44,9 +44,9 @@ Please refer examples for more information.
 ### Blocking big `transfer()` one by one
 
 ```C++
-#include <ESP32DMASPISlave.h>
+#include <ESP32SPISlave.h>
 
-ESP32DMASPI::Slave slave;
+ESP32SPISlave slave;
 
 static constexpr size_t BUFFER_SIZE = 8;
 static constexpr size_t QUEUE_SIZE = 1;

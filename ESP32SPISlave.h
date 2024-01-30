@@ -25,7 +25,7 @@
 ARDUINO_ESP32_SPI_SLAVE_NAMESPACE_BEGIN
 
 static constexpr const char *TAG = "ESP32SPISlave";
-static constexpr int SPI_SLAVE_TASK_STASCK_SIZE = 1024 * 1;
+static constexpr int SPI_SLAVE_TASK_STASCK_SIZE = 1024 * 4;
 static constexpr int SPI_SLAVE_TASK_PRIORITY = 5;
 
 static constexpr int SLAVE_QUEUE_TRANS_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
