@@ -104,7 +104,7 @@ You can use Master and Slave almost the same way (omit the Slave example here).
 void loop()
 {
     // if no transaction is in flight and all results are handled, queue new transactions
-    if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == 0) {
+    if (slave.hasTransactionsCompletedAndAllResultsHandled()) {
         // do some initialization for tx_buf and rx_buf
 
         // queue multiple transactions
@@ -121,7 +121,7 @@ void loop()
     // NOTE: you can't touch dma_tx/rx_buf because it's in-flight in the background
 
     // if all transactions are completed and all results are ready, handle results
-    if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == QUEUE_SIZE) {
+    if (slave.hasTransactionsCompletedAndAllResultsReady(QUEUE_SIZE)) {
         // get received bytes for all transactions
         const std::vector<size_t> received_bytes = slave.numBytesReceivedAll();
 
@@ -213,6 +213,10 @@ size_t numTransactionsCompleted();
 size_t numBytesReceived();
 /// @brief return all results of the completed transactions (received bytes)
 std::vector<size_t> numBytesReceivedAll();
+/// @brief check if the queued transactions are completed and all results are handled
+bool hasTransactionsCompletedAndAllResultsHandled();
+/// @brief check if the queued transactions are completed
+bool hasTransactionsCompletedAndAllResultsReady(size_t num_queued);
 
 // ===== Main Configurations =====
 // set these optional parameters before begin() if you want
