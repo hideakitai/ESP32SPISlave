@@ -29,16 +29,12 @@ void loop()
     initializeBuffers(tx_buf, rx_buf, BUFFER_SIZE);
 
     // start and wait to complete one BIG transaction (same data will be received from slave)
-    const int64_t received_bytes = slave.transfer(tx_buf, rx_buf, BUFFER_SIZE);
-    if (received_bytes < 0) {
-        esp_err_t err = received_bytes * -1;
-        Serial.printf("transaction failed with error: %u\n", err);
+    const size_t received_bytes = slave.transfer(tx_buf, rx_buf, BUFFER_SIZE);
+
+    // verify and dump difference with received data
+    if (verifyAndDumpDifference("slave", tx_buf, BUFFER_SIZE, "master", rx_buf, received_bytes)) {
+        Serial.println("successfully received expected data from master");
     } else {
-        // verify and dump difference with received data
-        if (verifyAndDumpDifference("slave", tx_buf, BUFFER_SIZE, "master", rx_buf, received_bytes)) {
-            Serial.println("successfully received expected data from master");
-        } else {
-            Serial.println("unexpected difference found between master/slave data");
-        }
+        Serial.println("unexpected difference found between master/slave data");
     }
 }
