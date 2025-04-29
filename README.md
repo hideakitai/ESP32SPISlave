@@ -229,6 +229,8 @@ void setQueueSize(size_t size);
 // ===== Optional Configurations =====
 // set these optional parameters before begin() if you want
 
+/// @brief set default data io level
+void setDataIODefaultLevel(bool level);
 /// @brief Bitwise OR of SPI_SLAVE_* flags.
 void setSlaveFlags(uint32_t flags);
 /// @brief SPI mode, representing a pair of (CPOL, CPHA) configuration: 0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)
