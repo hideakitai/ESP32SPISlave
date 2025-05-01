@@ -64,7 +64,9 @@ struct spi_slave_context_t
         .data5_io_num = -1,
         .data6_io_num = -1,
         .data7_io_num = -1,
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
         .data_io_default_level = false,
+#endif
         .max_transfer_sz = SOC_SPI_MAXIMUM_BUFFER_SIZE,
         .flags = SPICOMMON_BUSFLAG_SLAVE,
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
@@ -557,12 +559,14 @@ public:
 
     // ===== Optional Configurations =====
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
     /// @brief set default data io level
     /// @param level default data io level
     void setDataIODefaultLevel(bool level)
     {
         this->ctx.bus_cfg.data_io_default_level = level;
     }
+#endif
 
     /// @brief Bitwise OR of SPI_SLAVE_* flags.
     /// @param flags
