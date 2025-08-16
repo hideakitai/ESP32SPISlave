@@ -380,10 +380,6 @@ public:
         uint8_t* rx_buf,
         size_t size
     ) {
-        if (size % 4 != 0) {
-            ESP_LOGW(TAG, "failed to queue transaction: buffer size must be multiples of 4 bytes");
-            return false;
-        }
         if (this->transactions.size() >= this->ctx.if_cfg.queue_size) {
             ESP_LOGW(TAG, "failed to queue transaction: queue is full - only %u transactions can be queued at once", this->ctx.if_cfg.queue_size);
             return false;
